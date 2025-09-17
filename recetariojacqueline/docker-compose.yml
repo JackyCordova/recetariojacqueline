@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  consul:
+    image: hashicorp/consul:1.18
+    container_name: recetario-consul
+    command: ["agent","-dev","-client=0.0.0.0","-ui"]
+    ports:
+      - "8500:8500"
+    networks: [recetario-net]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8500/v1/status/leader"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  metadata:
+    build:
+      context: .
+      dockerfile: ./metadata/Dockerfile
+    environment:
+      - PORT=8081
+      - CONSUL_ADDR=consul:8500
+      - SERVICE_HOST=metadata
+    depends_on:
+      consul:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    networks: [recetario-net]
+    restart: unless-stopped
+
+  rating:
+    build:
+      context: .
+      dockerfile: ./rating/Dockerfile
+    environment:
+      - PORT=8082
+      - CONSUL_ADDR=consul:8500
+      - SERVICE_HOST=rating
+    depends_on:
+      consul:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    networks: [recetario-net]
+    restart: unless-stopped
+
+  recipe:
+    build:
+      context: .
+      dockerfile: ./recipe/Dockerfile
+    environment:
+      - PORT=8083
+      - CONSUL_ADDR=consul:8500
+      - SERVICE_HOST=recipe
+    depends_on:
+      consul:
+        condition: service_healthy
+      metadata:
+        condition: service_started
+      rating:
+        condition: service_started
+    ports:
+      - "8083:8083"
+    networks: [recetario-net]
+    restart: unless-stopped
+
+networks:
+  recetario-net: {}
