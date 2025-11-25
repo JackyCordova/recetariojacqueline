@@ -1,0 +1,65 @@
+syntax = "proto3";
+package recetario;
+option go_package = "recetariojacqueline.com/src/gen;gen";
+
+service MetadataService {
+  rpc GetMetadata(GetMetadataRequest) returns (GetMetadataResponse);
+  rpc PutMetadata(PutMetadataRequest) returns (PutMetadataResponse);
+}
+
+service RatingService {
+  rpc GetAggregatedRating(GetAggregatedRatingRequest) returns (GetAggregatedRatingResponse);
+  rpc PutRating(PutRatingRequest) returns (PutRatingResponse);
+}
+
+service RecipeService {
+  rpc GetRecipeDetails(GetRecipeDetailsRequest) returns (GetRecipeDetailsResponse);
+}
+
+/*************** Requests / Responses ***************/
+message GetMetadataRequest { string recipe_id = 1; }
+message GetMetadataResponse { Metadata metadata = 1; }
+
+message PutMetadataRequest { Metadata metadata = 1; }
+message PutMetadataResponse {}
+
+message GetAggregatedRatingRequest {
+  string record_id = 1;
+  string record_type = 2; // "recipe"
+}
+message GetAggregatedRatingResponse {
+  double avg = 1;
+  int32 count = 2;
+}
+
+message PutRatingRequest {
+  string record_id = 1;
+  string record_type = 2; // "recipe"
+  string user_id = 3;
+  double value = 4;
+}
+message PutRatingResponse {}
+
+message GetRecipeDetailsRequest { string recipe_id = 1; }
+message GetRecipeDetailsResponse { RecipeDetails recipe_details = 1; }
+
+/*************** Dominios ***************/
+message Metadata {
+  string id = 1;
+  RecipeStruct recipe = 2;
+}
+
+message RecipeStruct {
+  string title = 1;
+  string description = 2;
+  repeated string ingredients = 3;
+  repeated string utensils = 4;
+  repeated string steps = 5;
+  int32 servings = 6;
+  string difficulty = 7;
+}
+
+message RecipeDetails {
+  double rating = 1;
+  Metadata metadata = 2;
+}
